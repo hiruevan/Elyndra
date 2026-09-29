@@ -1,0 +1,6 @@
+obj/src/libs/tiles.c.bc: src\libs\tiles.c src\libs\tiles.h \
+  C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\stdint.h \
+  C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\cdefs.h \
+  C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\graphx.h \
+  C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\stdlib.h \
+  C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\stdbool.h
