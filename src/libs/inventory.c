@@ -66,6 +66,32 @@ uint8_t inventory_remove(Inventory *inv, ItemId id, uint8_t count)
     return removed;
 }
 
+uint8_t inventory_remove_gold(Inventory *inv, uint16_t amount)
+{
+    if (inv->gold < amount) return 0;
+    inv->gold -= amount;
+    return 1;
+}
+
+uint8_t inventory_can_add(const Inventory *inv, ItemId id, uint8_t count)
+{
+    const ItemDef *def = &item_defs[id];
+    uint16_t room = 0;
+    uint8_t empty = 0;
+
+    for (uint8_t i = 0; i < INVENTORY_SIZE; i++)
+    {
+        const InventorySlot *s = &inv->slots[i];
+        if (s->id == ITEM_NONE)
+            empty++;
+        else if (def->stackable && s->id == id)
+            room += MAX_STACK - s->count;
+    }
+
+    room += (def->stackable ? MAX_STACK : 1) * empty;
+    return room >= count;
+}
+
 uint8_t inventory_count(const Inventory *inv, ItemId id)
 {
     uint8_t total = 0;

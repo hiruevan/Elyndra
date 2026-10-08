@@ -3,6 +3,7 @@
 #include "interactable.h"
 #include "../interactions/interactables.h"
 #include "../interactions/sign_strings.h"
+#include "../interactions/shop_data.h"
 #include "../interactions/items.h"
 #include "dialogue.h"
 #include "text_engine.h"
@@ -32,7 +33,7 @@ void handle_interact(Interactable *interactable, TileMap *map, Player *player)
     switch (interactable->type)
     {
         case INTERACT_NPC:
-            start_dialogue(interactable->data);
+            start_dialogue(interactable->data, player);
             break;
  
         case INTERACT_CHEST:
@@ -57,6 +58,10 @@ void handle_interact(Interactable *interactable, TileMap *map, Player *player)
  
         case INTERACT_SIGN:
             textbox_show(sign_strings[interactable->data]);
+            break;
+
+        case INTERACT_SHOP:
+            shop_open(interactable->data);
             break;
  
         default:

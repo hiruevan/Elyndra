@@ -11,6 +11,32 @@
 #include "maps/town_map.h"
 #include "maps/world_map.h"
 
+// Area Names
+char *get_area_name(AreaId area) {
+    switch (area)
+    {
+        case AREA_OVERWORLD:
+            return "Overworld";
+        case AREA_TEST:
+        case AREA_TOWN:
+        case AREA_HOUSE:
+            return "Village";
+        default:
+            return "\n";
+    }
+}
+
+// Area Ecounter rates
+uint8_t get_encounter_rate(AreaId area) {
+    switch (area)
+    {
+        case AREA_OVERWORLD:
+            return 10;
+        default:
+            return 0;
+    }
+}
+
 // Loading zone function
 void load_area(AreaId area, TileMap *current_map)
 {
@@ -20,22 +46,18 @@ void load_area(AreaId area, TileMap *current_map)
             tilemap_fullset(current_map, &world_map[0][0],
                             WORLD_MAP_WIDTH, WORLD_MAP_HEIGHT);
             break;
-
         case AREA_TEST:
             tilemap_fullset(current_map, &test_map[0][0],
                             TEST_MAP_WIDTH, TEST_MAP_HEIGHT);
             break;
-
         case AREA_TOWN:
             tilemap_fullset(current_map, &town_map[0][0],
                             TOWN_MAP_WIDTH, TOWN_MAP_HEIGHT);
             break;
-
         case AREA_HOUSE:
             tilemap_fullset(current_map, &test_house_map[0][0],
                             TEST_HOUSE_MAP_WIDTH, TEST_HOUSE_MAP_HEIGHT);
             break;
-
         default:
             break;
     }
@@ -53,8 +75,8 @@ void load_area(AreaId area, TileMap *current_map)
     }
 }
 
-static AreaReturn area_stack[AREA_STACK_DEPTH];
-static uint8_t    area_stack_top = 0; /* number of entries currently pushed */
+AreaReturn area_stack[AREA_STACK_DEPTH];
+uint8_t    area_stack_top = 0;
 
 uint8_t area_stack_push(AreaId area, uint16_t x, uint16_t y)
 {

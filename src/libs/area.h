@@ -1,9 +1,11 @@
 #pragma once
-#include <graphx.h>
 
+#include <graphx.h>
 #include "tiles.h"
 
-typedef enum 
+#define AREA_STACK_DEPTH 32
+
+typedef enum
 {
     AREA_OVERWORLD,
     AREA_TOWN,
@@ -13,11 +15,9 @@ typedef enum
     AREA_COUNT
 } AreaId;
 
-#define AREA_STACK_DEPTH 32
-
 typedef struct
 {
-    AreaId   area;
+    AreaId area;
     uint16_t x;
     uint16_t y;
 } AreaReturn;
@@ -33,8 +33,19 @@ typedef struct
     uint16_t to_y;
 } Portal;
 
+extern AreaReturn area_stack[AREA_STACK_DEPTH];
+extern uint8_t area_stack_top; /* number of entries currently pushed */
+
+uint8_t get_encounter_rate(AreaId area);
+char *get_area_name(AreaId area);
+
 uint8_t area_stack_push(AreaId area, uint16_t x, uint16_t y);
 uint8_t area_stack_pop(AreaId *area, uint16_t *x, uint16_t *y);
+
 void load_area(AreaId area, TileMap *current_map);
 
-const Portal *find_portal(AreaId area, uint16_t x, uint16_t y);
+const Portal *find_portal(
+    AreaId area,
+    uint16_t x,
+    uint16_t y
+);

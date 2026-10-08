@@ -4,7 +4,7 @@
 #include "../interactions/items.h"
 
 #define INVENTORY_SIZE 32
-#define MAX_STACK 9
+#define MAX_STACK 99
 
 typedef struct {
     ItemId  id;
@@ -20,6 +20,8 @@ typedef struct {
 void    inventory_init(Inventory *inv);
 uint8_t inventory_add(Inventory *inv, ItemId id, uint8_t count); 
 uint8_t inventory_remove(Inventory *inv, ItemId id, uint8_t count);
+uint8_t inventory_remove_gold(Inventory *inv, uint16_t amount);
+uint8_t inventory_can_add(const Inventory *inv, ItemId id, uint8_t count);
 void inventory_add_gold(Inventory *inv, uint16_t amount);
 uint8_t inventory_count(const Inventory *inv, ItemId id);
 uint8_t inventory_has(const Inventory *inv, ItemId id, uint8_t count);

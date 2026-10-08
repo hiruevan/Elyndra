@@ -3,17 +3,15 @@
  
 #include <stdbool.h>
  
-#include "libs/player.h"
- 
-/* Draws and handles input for one frame of the Breath-of-Fire style
- * inventory menu. Call once per frame while GAME_INVENTORY is active,
- * same convention as pause_screen():
- *
- *   returns true  -> stay in GAME_INVENTORY
- *   returns false -> pop back to GAME_PAUSE_MENU
- */
-bool inventory_screen(Player *player);
-void inventory_screen_open(void);
+#include "game_state.h"
+#include "../libs/player.h"
+#include "../libs/rendering.h"
+
+bool status_apply_item(PartyMember *m, const ItemDef *def);
+void inventory_screen_set_tab(uint8_t tab);
+bool inventory_screen(Player *player, uint8_t
+    *inv_prev_up, uint8_t *inv_prev_down, uint8_t *inv_prev_left, uint8_t *inv_prev_right, uint8_t *inv_prev_action, uint8_t *inv_prev_back, uint8_t *inv_prev_inv,
+    GameState *current_state, TileMap *current_map, Tile *tileset, Renderer *renderer, Camera *camera);
  
 #endif
  

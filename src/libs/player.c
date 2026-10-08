@@ -1,7 +1,121 @@
 #include <keypadc.h>
+#include <string.h>
 
 #include "player.h"
 #include "inventory.h"
+
+/* ---- item logic ---------------------------------------------------------- */
+
+/* Who can use this item? Currently: living members below max HP.
+ * Extend here for revive items, MP restore, etc. */
+bool member_can_use(const PartyMember *m, const ItemDef *def)
+{
+    if (def->category != CATEGORY_CONSUMABLE)
+        return false;
+    if (def->stats.consumable.heal_amount > 0)
+        return m->hp > 0 && m->hp < m->max_hp;
+    else
+        return m->mp > 0 && m->mp < m->max_mp;
+}
+
+ItemId item_id_of(const ItemDef *def)
+{
+    return (ItemId)(def - item_defs);
+}
+
+bool unequip_item(Inventory *inv, ItemId *slot)
+{
+    if (*slot == ITEM_NONE)
+        return false;
+    if (!inventory_add(inv, *slot, 1))   /* inventory full */
+        return false;
+    *slot = ITEM_NONE;
+    return true;
+}
+
+bool member_can_equip(const PartyMember *m, const ItemDef *def)
+{
+    ItemId id = item_id_of(def);
+    if (def->category == CATEGORY_WEAPON)
+        return m->weapon != id;
+    if (def->category == CATEGORY_ARMOR)
+        return m->armor != id;
+    return false;
+    /* Extend here: class restrictions, level requirements, etc. */
+}
+
+bool member_can_target(const PartyMember *m, const ItemDef *def)
+{
+    switch (def->category)
+    {
+        case CATEGORY_CONSUMABLE: return member_can_use(m, def);
+        case CATEGORY_WEAPON:
+        case CATEGORY_ARMOR:      return member_can_equip(m, def);
+        default:                  return false;
+    }
+}
+
+uint16_t member_attack(const PartyMember *m)
+{
+    uint16_t atk = m->attack;
+    if (m->weapon != ITEM_NONE)
+        atk += item_defs[m->weapon].stats.weapon.attack;
+    return atk;
+}
+
+uint16_t member_defense(const PartyMember *m)
+{
+    uint16_t def = m->defense;
+    if (m->armor != ITEM_NONE)
+        def += item_defs[m->armor].stats.armor.defense;
+    return def;
+}
+
+int speed_with(const PartyMember *m, ItemId w, ItemId a)
+{
+    int spd = m->speed;
+    if (w != ITEM_NONE) spd -= item_defs[w].stats.weapon.weight;
+    if (a != ITEM_NONE) spd -= item_defs[a].stats.armor.weight;
+    return spd < 1 ? 1 : spd;
+}
+
+int member_speed(const PartyMember *m)
+{
+    return speed_with(m, m->weapon, m->armor);
+}
+
+bool status_apply_item(PartyMember *m, const ItemDef *def)
+{
+    if (!member_can_use(m, def))
+        return false;
+
+    uint16_t heal = def->stats.consumable.heal_amount;
+    uint16_t recover = def->stats.consumable.mp_regain;
+    uint16_t room_h = m->max_hp - m->hp;
+    uint16_t room_m = m->max_mp - m->mp;
+    m->hp += (heal > room_h) ? room_h : heal;
+    m->mp += (recover > room_m) ? room_m : recover;
+    return true;
+}
+
+bool equip_item(Inventory *inv, PartyMember *m, ItemId id)
+{
+    ItemId *slot = (item_defs[id].category == CATEGORY_WEAPON) ? &m->weapon
+                                                               : &m->armor;
+    ItemId old = *slot;
+
+    if (inventory_remove(inv, id, 1) == 0)
+        return false;
+
+    if (old != ITEM_NONE && !inventory_add(inv, old, 1))
+    {
+        inventory_add(inv, id, 1);   /* roll back, inventory was full */
+        return false;
+    }
+
+    *slot = id;
+    return true;
+}
 
 static const uint8_t tile_walkable[MAX_TILES] =
 {
@@ -15,11 +129,33 @@ static const uint8_t tile_walkable[MAX_TILES] =
     [36] = 1
 };
 
+uint8_t player_has_item(const Player *p, uint8_t item_id)
+{
+    for (uint8_t i = 0; i < INVENTORY_SIZE; i++)
+    {
+        if (p->inventory.slots[i].id == item_id && p->inventory.slots[i].count > 0)
+            return 1;
+    }
+    return 0;
+}
+
+uint8_t player_give_item(Player *p, uint8_t item_id)
+{
+    return inventory_add(&p->inventory, item_id, 1);
+}
+
+uint8_t player_take_item(Player *p, uint8_t item_id)
+{
+    return inventory_remove(&p->inventory, item_id, 1);
+}
 
 void player_init(
     Player *player,
     uint16_t tile_x,
-    uint16_t tile_y
+    uint16_t tile_y,
+    uint8_t story_flag,
+    const PartyMember *party,
+    uint8_t party_count
 )
 {
     player->tile_x = tile_x;
@@ -44,8 +180,17 @@ void player_init(
         player->screen_y;
 
     player->moving = 0;
+    player->facing = DIRECTION_DOWN;
+
+    player->story_flag = story_flag;
 
     inventory_init(&player->inventory);
+
+    if (party_count > 7)
+        party_count = 7;
+
+    memcpy(player->party, party, party_count * sizeof(PartyMember));
+    player->party_count = party_count;
 }
 
 uint8_t player_can_move_to(

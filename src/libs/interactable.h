@@ -9,6 +9,7 @@ typedef enum
     INTERACT_CHEST,
     INTERACT_GOLD_STORE,
     INTERACT_SIGN,
+    INTERACT_SHOP,
 
     INTERACT_TYPE_COUNT
 } InteractableType;

@@ -7,10 +7,8 @@
 #include "camera.h"
 #include "inventory.h"
 
-/*
- * Player movement speed in pixels per frame.
- */
 #define PLAYER_SPEED 4
+#define MAX_PARTY_COUNT 7
 
 typedef enum
 {
@@ -19,6 +17,16 @@ typedef enum
     DIRECTION_LEFT,
     DIRECTION_RIGHT
 } Direction;
+
+typedef struct {
+    char name[6];
+    uint8_t level;
+    uint16_t hp, max_hp;
+    uint8_t mp, max_mp;
+    uint32_t exp, exp_next;
+    uint8_t attack, defense, speed;
+    ItemId armor, weapon;
+} PartyMember;
 
 typedef struct
 {
@@ -48,21 +56,45 @@ typedef struct
     /* The direction the player is looking */
     Direction facing;
 
+    /* The story progression tracker */
+    uint8_t story_flag;
+
     /* Player's inventory & other information */
     Inventory inventory;
 
+    // Party
+    uint8_t party_count;
+    PartyMember party[MAX_PARTY_COUNT];
 } Player;
 
+bool member_can_use(const PartyMember *m, const ItemDef *def);
+ItemId item_id_of(const ItemDef *def);
+bool unequip_item(Inventory *inv, ItemId *slot);
+bool member_can_equip(const PartyMember *m, const ItemDef *def);
+bool member_can_target(const PartyMember *m, const ItemDef *def);
+uint16_t member_attack(const PartyMember *m);
+uint16_t member_defense(const PartyMember *m);
+int speed_with(const PartyMember *m, ItemId w, ItemId a);
+int member_speed(const PartyMember *m);
+bool status_apply_item(PartyMember *m, const ItemDef *def);
+bool equip_item(Inventory *inv, PartyMember *m, ItemId id);
 
 /*
  * Initialize a player at a tile position.
  */
 void player_init(
-    Player *player,
+   Player *player,
     uint16_t tile_x,
-    uint16_t tile_y
+    uint16_t tile_y,
+    uint8_t story_flag,
+    const PartyMember *party,
+    uint8_t party_count
 );
 
+uint8_t player_has_item(const Player *p, uint8_t item_id);
+
+uint8_t player_give_item(Player *p, uint8_t item_id);
+uint8_t player_take_item(Player *p, uint8_t item_id);
 
 /*
  * Check whether a tile can be entered.
