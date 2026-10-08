@@ -1,5 +1,4 @@
-obj/src/game_states/inventory_screen.c.bc: \
-  src\game_states\inventory_screen.c \
+obj/src/interactions/shop_screen.c.bc: src\interactions\shop_screen.c \
   C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\graphx.h \
   C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\stdint.h \
   C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\cdefs.h \
@@ -9,10 +8,10 @@ obj/src/game_states/inventory_screen.c.bc: \
   C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\stdio.h \
   C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\stdarg.h \
   C:\Users\hirue\Documents\calculatorprojects\~TI_tools\CEdev\CEdev\include\string.h \
-  src\game_states\inventory_screen.h src\game_states\game_state.h \
-  src\game_states\..\libs\player.h src\game_states\..\libs\tiles.h \
-  src\game_states\..\libs\camera.h src\game_states\..\libs\inventory.h \
-  src\game_states\..\libs\..\interactions\items.h \
-  src\game_states\..\libs\rendering.h \
-  src\game_states\..\interactions\items.h \
-  src\game_states\..\libs\input.h src\game_states\..\libs\area.h
+  src\interactions\shop_data.h src\interactions\..\libs\player.h \
+  src\interactions\..\libs\tiles.h src\interactions\..\libs\camera.h \
+  src\interactions\..\libs\inventory.h \
+  src\interactions\..\libs\..\interactions\items.h \
+  src\interactions\..\libs\area.h src\interactions\..\libs\rendering.h \
+  src\interactions\..\game_states\game_state.h src\interactions\items.h \
+  src\interactions\..\libs\input.h

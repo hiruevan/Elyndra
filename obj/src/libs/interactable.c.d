@@ -12,5 +12,9 @@ obj/src/libs/interactable.c.bc: src\libs\interactable.c \
   src\libs\..\interactions\interactables.h \
   src\libs\..\interactions\..\libs\area.h \
   src\libs\..\interactions\..\libs\interactable.h \
-  src\libs\..\interactions\sign_strings.h src\libs\dialogue.h \
-  src\libs\text_engine.h
+  src\libs\..\interactions\sign_strings.h \
+  src\libs\..\interactions\shop_data.h \
+  src\libs\..\interactions\..\libs\player.h \
+  src\libs\..\interactions\..\libs\rendering.h \
+  src\libs\..\interactions\..\game_states\game_state.h \
+  src\libs\dialogue.h src\libs\text_engine.h
