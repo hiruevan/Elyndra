@@ -1,2 +1,7 @@
 # Elyndra
-This is a TI 84 CE calculator JRPG game I made.
+This is a JRPG that runs on a TI-84 CE calculator. It is not complete, but all the basic functions have been finished.
+
+## How to install
+Go to the latest release at <https://github.com/hiruevan/elyndra/releases/latest>. Download the binaries (ELYNDRA.8xp, ELYNDRA.8xp.0.8xv, ELYNDRA.8xp.1.8xv). You can then use either a TI-84 emulator like CEmu (download CEmu at <https://ce-programming.github.io/CEmu>), or natively install it on a TI-84 CE. Installing the binaries on the calculator natively can be tricky. You first need to get the TI Connect app from Texas Instruments at <https://education.ti.com/en/software/details/en/B59F6C83468C4574ABFEE93D2BC3F807/swticonnectsoftware>. Then you can simply plug in your calculator and drop the binaries on the icon in the app. To send binaries on CEmu, just drop the files on the LCD display in the application.
+If the calculator (native or emulated) says you need libraries (or something along those lines), you need to install CE Libraries. Download the clubs.8xp file from <https://github.com/CE-Programming/libraries/releases/latest>. and send that binary to the calculator as well.
+If your calculator was manufactured in 2020 or later, you will also need to install a shell. It may may display the error “Attempted to use a variable or function where it is not valid.” I recommend arTIfiCE. Download the binary (ARTIFICE.8xp) at <https://yvantt.github.io/arTIfiCE> and send it to your calculator. You can now press the “prgm” button, select ARTIFACE and then select ELYNDRA to play the game.
