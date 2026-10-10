@@ -9,9 +9,9 @@
 #include "../libs/inventory.h"
 #include "../interactions/items.h"
 
-/* Palette indices (xlibc palette). Adjust if the colours look wrong. */
 #define C_BLACK  0
-#define C_WHITE  2
+#define C_WHITE  255
+#define C_BLUE   2
 #define C_RED    224
 #define C_GREEN  28
 #define C_GRAY   181
@@ -85,8 +85,8 @@ static uint8_t edge(uint8_t idx, uint8_t now)
 static Input read_input(void)
 {
     Input in;
-    in.up   = edge(0, kb_IsDown(kb_KeyUp));
-    in.down = edge(1, kb_IsDown(kb_KeyDown));
+    in.up   = edge(0, kb_IsDown(kb_KeyUp)   || kb_IsDown(kb_KeyLeft));
+    in.down = edge(1, kb_IsDown(kb_KeyDown) || kb_IsDown(kb_KeyRight));
     in.ok   = edge(2, kb_IsDown(kb_Key2nd));
     in.back = edge(3, kb_IsDown(kb_KeyAlpha));
     return in;
@@ -183,17 +183,61 @@ static void build_item_list(const Player *p)
     }
 }
 
+// ------------- Level up --------------------
+static uint16_t scaled_stat(
+    uint16_t start,
+    uint16_t cap,
+    uint16_t level,
+    uint16_t target_level
+) {
+    if (level <= 1)
+        return start;
+
+    if (level >= target_level)
+        return cap;
+
+    return start + (cap - start) * (level - 1)
+        / (target_level - 1);
+}
+
 static void level_up(PartyMember *m)
 {
     m->level++;
-    m->exp_next += 20 + 10 * (uint32_t)m->level;
-    m->max_hp   += 6;   m->hp += 6;
-    m->max_mp   += 2;   m->mp += 2;
-    m->attack   += 1;
-    m->defense  += 1;
-    if (m->level % 3 == 0) m->speed += 1;
-}
 
+    // EXP requirement (keep your existing formula for now)
+    m->exp_next = (uint16_t)(m->exp_next * 1.8f);
+    m->exp_next += 2 * m->level;
+
+    // Remember previous maximums so we can apply the gains.
+    uint16_t old_max_hp = m->max_hp;
+    uint16_t old_max_mp = m->max_mp;
+
+    // HP: 20 -> 999 by level 45
+    m->max_hp = scaled_stat(20, 999, m->level, 45);
+
+    // MP: 8 -> 99 by level 45
+    m->max_mp = scaled_stat(8, 99, m->level, 45);
+
+    // Attack: 12 -> 99 by level 50
+    m->attack = scaled_stat(12, 99, m->level, 50);
+
+    // Defense: 16 -> 99 by level 50
+    m->defense = scaled_stat(16, 99, m->level, 50);
+
+    // Speed: 10 -> 99 by level 55
+    m->speed = scaled_stat(10, 99, m->level, 55);
+
+    // Increase current HP/MP by the amount their maximums grew.
+    m->hp += m->max_hp - old_max_hp;
+    m->mp += m->max_mp - old_max_mp;
+
+    // Never exceed the maximums.
+    if (m->hp > m->max_hp)
+        m->hp = m->max_hp;
+
+    if (m->mp > m->max_mp)
+        m->mp = m->max_mp;
+}
 /* ------------------------------ public ----------------------------- */
 
 void battle_start(EnemyType type, uint8_t count)
@@ -225,7 +269,7 @@ uint8_t battle_active(void) { return B.active; }
 
 static void draw_bar(int x, int y, int w, int cur, int max)
 {
-    gfx_SetColor(C_GRAY);
+    gfx_SetColor(C_BLACK);
     gfx_FillRectangle_NoClip(x, y, w, 4);
     if (cur > 0 && max > 0) {
         int fw = (cur * w) / max;
@@ -237,17 +281,17 @@ static void draw_bar(int x, int y, int w, int cur, int max)
 
 static void draw_box(int x, int y, int w, int h)
 {
-    gfx_SetColor(C_WHITE);
+    gfx_SetColor(C_BLUE);
     gfx_FillRectangle_NoClip(x, y, w, h);
-    gfx_SetColor(C_BLACK);
+    gfx_SetColor(C_WHITE);
     gfx_Rectangle_NoClip(x, y, w, h);
 }
 
 static void text(int x, int y, const char *s)
 {
-    gfx_SetTextFGColor(C_BLACK);
-    gfx_SetTextBGColor(C_WHITE);
-    gfx_SetTextTransparentColor(C_WHITE);
+    gfx_SetTextFGColor(C_WHITE);
+    gfx_SetTextBGColor(C_BLUE);
+    gfx_SetTextTransparentColor(C_BLUE);
     gfx_PrintStringXY(s, x, y);
 }
 
