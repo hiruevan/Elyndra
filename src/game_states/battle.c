@@ -1,9 +1,10 @@
-#include <graphx.h>
-#include <keypadc.h>
+#include <graphics.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <input.h>
 
 #include "battle.h"
 #include "../libs/inventory.h"
@@ -85,10 +86,10 @@ static uint8_t edge(uint8_t idx, uint8_t now)
 static Input read_input(void)
 {
     Input in;
-    in.up   = edge(0, kb_IsDown(kb_KeyUp)   || kb_IsDown(kb_KeyLeft));
-    in.down = edge(1, kb_IsDown(kb_KeyDown) || kb_IsDown(kb_KeyRight));
-    in.ok   = edge(2, kb_IsDown(kb_Key2nd));
-    in.back = edge(3, kb_IsDown(kb_KeyAlpha));
+    in.up   = edge(0, KeyDown(INPUT.UpKey)   || KeyDown(INPUT.LeftKey));
+    in.down = edge(1, KeyDown(INPUT.DownKey) || KeyDown(INPUT.RightKey));
+    in.ok   = edge(2, KeyDown(INPUT.ActionKey));
+    in.back = edge(3, KeyDown(INPUT.BackKey));
     return in;
 }
 
@@ -269,37 +270,37 @@ uint8_t battle_active(void) { return B.active; }
 
 static void draw_bar(int x, int y, int w, int cur, int max)
 {
-    gfx_SetColor(C_BLACK);
-    gfx_FillRectangle_NoClip(x, y, w, 4);
+    SetColor(C_BLACK);
+    FillRectangle_NoClip(x, y, w, 4);
     if (cur > 0 && max > 0) {
         int fw = (cur * w) / max;
         if (fw < 1) fw = 1;
-        gfx_SetColor((cur * 4 < max) ? C_RED : C_GREEN);
-        gfx_FillRectangle_NoClip(x, y, fw, 4);
+        SetColor((cur * 4 < max) ? C_RED : C_GREEN);
+        FillRectangle_NoClip(x, y, fw, 4);
     }
 }
 
 static void draw_box(int x, int y, int w, int h)
 {
-    gfx_SetColor(C_BLUE);
-    gfx_FillRectangle_NoClip(x, y, w, h);
-    gfx_SetColor(C_WHITE);
-    gfx_Rectangle_NoClip(x, y, w, h);
+    SetColor(C_BLUE);
+    FillRectangle_NoClip(x, y, w, h);
+    SetColor(C_WHITE);
+    Rectangle_NoClip(x, y, w, h);
 }
 
 static void text(int x, int y, const char *s)
 {
-    gfx_SetTextFGColor(C_WHITE);
-    gfx_SetTextBGColor(C_BLUE);
-    gfx_SetTextTransparentColor(C_BLUE);
-    gfx_PrintStringXY(s, x, y);
+    SetTextFGColor(C_WHITE);
+    SetTextBGColor(C_BLUE);
+    SetTextTransparentColor(C_BLUE);
+    PrintStringXY(s, x, y);
 }
 
 static void draw_battle(const Player *p)
 {
     char buf[24];
 
-    gfx_FillScreen(C_PANEL);
+    FillScreen(C_PANEL);
 
     /* Enemies (placeholder boxes: swap for sprites later) */
     for (uint8_t i = 0; i < B.enemy_count; i++) {
@@ -308,19 +309,19 @@ static void draw_battle(const Player *p)
         const EnemyDef *d = &enemy_defs[e->type];
         int x = 30 + i * 95, y = 30;
 
-        gfx_SetColor(C_RED);
-        gfx_FillRectangle_NoClip(x, y, 48, 48);
-        gfx_SetColor(C_BLACK);
-        gfx_Rectangle_NoClip(x, y, 48, 48);
+        SetColor(C_RED);
+        FillRectangle_NoClip(x, y, 48, 48);
+        SetColor(C_BLACK);
+        Rectangle_NoClip(x, y, 48, 48);
 
-        gfx_SetTextFGColor(C_WHITE);
-        gfx_SetTextTransparentColor(C_PANEL);
-        gfx_SetTextBGColor(C_PANEL);
-        gfx_PrintStringXY(d->name, x, y + 52);
+        SetTextFGColor(C_WHITE);
+        SetTextTransparentColor(C_PANEL);
+        SetTextBGColor(C_PANEL);
+        PrintStringXY(d->name, x, y + 52);
         draw_bar(x, y + 64, 48, e->hp, d->hp);
 
         if (B.phase == PH_TARGET && B.target_sel == i)
-            gfx_PrintStringXY("v", x + 20, y - 12);
+            PrintStringXY("v", x + 20, y - 12);
     }
 
     /* Message strip */
@@ -367,7 +368,7 @@ static void draw_battle(const Player *p)
         text(204, 224, "ALPHA: back");
     }
 
-    gfx_SwapDraw();
+    SwapDraw();
 }
 
 /* ------------------------------ logic ------------------------------ */
@@ -531,7 +532,7 @@ void battle_logic(GameState *current_state, Player *player, TileMap *current_map
     case PH_END:
         B.active = 0;
         rendering_draw_initial(renderer, current_map, tileset, camera, player);
-        gfx_SwapDraw();
+        SwapDraw();
         *current_state = GAME_EXPLORATION;
         return;
 

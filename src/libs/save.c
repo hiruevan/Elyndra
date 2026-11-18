@@ -2,7 +2,7 @@
 #include "interactable.h"
 #include "area.h"
 #include <string.h>
-#include <fileioc.h>
+#include <files.h>
 
 
 /* ------------------------------------------------------------------ */
@@ -101,11 +101,11 @@ bool save_read(uint8_t slot, GameSave *out)
     char appvar[8];
     slot_appvar_name(slot, appvar);
 
-    uint8_t handle = ti_Open(appvar, "r");
+    uint8_t handle = OpenFile(appvar, "r");
     if (!handle) return false;
 
-    size_t read = ti_Read(out, sizeof(GameSave), 1, handle);
-    ti_Close(handle);
+    size_t read = ReadFile(out, sizeof(GameSave), 1, handle);
+    CloseFile(handle);
 
     return read;
 }
@@ -116,11 +116,11 @@ bool save_write(uint8_t slot, const GameSave *save)
     char appvar[8];
     slot_appvar_name(slot, appvar);
 
-    uint8_t handle = ti_Open(appvar, "w");
+    uint8_t handle = OpenFile(appvar, "w");
     if (!handle) return false;
 
-    size_t written = ti_Write(save, sizeof(GameSave), 1, handle);
-    ti_Close(handle);
+    size_t written = WriteFile(save, sizeof(GameSave), 1, handle);
+    CloseFile(handle);
 
     return written == 1;
 }
@@ -132,12 +132,12 @@ bool save_delete(uint8_t slot)
     char appvar[8];
     slot_appvar_name(slot, appvar);
 
-    ti_Delete(appvar);
+    DeleteFile(appvar);
 
     // Confirm it's really gone instead of trusting the return value
-    uint8_t handle = ti_Open(appvar, "r");
+    uint8_t handle = OpenFile(appvar, "r");
     if (handle) {
-        ti_Close(handle);
+        CloseFile(handle);
         return false;
     }
     return true;

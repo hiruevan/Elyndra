@@ -1,7 +1,8 @@
-#include <graphx.h>
-#include <keypadc.h>
+#include <graphics.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <input.h>
 
 #include "inventory_screen.h"
 #include "game_state.h"
@@ -9,7 +10,6 @@
 #include "../libs/inventory.h"
 #include "../libs/player.h"
 #include "../interactions/items.h"
-#include "../libs/input.h"
 #include "../libs/area.h"
 #include "../libs/rendering.h"
 
@@ -72,7 +72,6 @@ static uint8_t inv_scroll = 0;
 static uint8_t pty_cursor = 0;   /* party tab cursor                  */
 static uint8_t pty_scroll = 0;
 
-static uint8_t prev_unequip = 0;
 
 static bool    inv_picking   = false;  /* choosing a target for an item */
 static uint8_t inv_pick_slot = 0;
@@ -112,14 +111,6 @@ static void party_swap(Player *player, uint8_t a, uint8_t b)
 }
 
 /* ---- input helpers ------------------------------------------------------- */
-
-static bool edge(uint8_t *prev, uint8_t now)
-{
-    bool pressed = key_just_pressed(*prev, now);
-    *prev = now;
-    return pressed;
-}
-
 static void list_nav(uint8_t count, uint8_t rows, uint8_t *cursor, uint8_t *scroll,
                      bool up, bool down)
 {
@@ -147,11 +138,11 @@ static void list_nav(uint8_t count, uint8_t rows, uint8_t *cursor, uint8_t *scro
 
 static void draw_box(int x, int y, int w, int h)
 {
-    gfx_SetColor(COL_PANEL_BG);
-    gfx_FillRectangle(x, y, w, h);
-    gfx_SetColor(COL_BORDER);
-    gfx_Rectangle(x, y, w, h);
-    gfx_Rectangle(x + 2, y + 2, w - 4, h - 4);
+    SetColor(COL_PANEL_BG);
+    FillRectangle(x, y, w, h);
+    SetColor(COL_BORDER);
+    Rectangle(x, y, w, h);
+    Rectangle(x + 2, y + 2, w - 4, h - 4);
 }
 
 static void draw_tabs(void)
@@ -159,14 +150,14 @@ static void draw_tabs(void)
     int x = HEADER_X;
     for (uint8_t i = 0; i < INV_TAB_COUNT; i++)
     {
-        gfx_SetColor(i == inv_tab ? COL_TAB_ON : COL_TAB_OFF);
-        gfx_FillRectangle(x, HEADER_Y, TAB_WIDTH, HEADER_H);
-        gfx_SetColor(COL_BORDER);
-        gfx_Rectangle(x, HEADER_Y, TAB_WIDTH, HEADER_H);
+        SetColor(i == inv_tab ? COL_TAB_ON : COL_TAB_OFF);
+        FillRectangle(x, HEADER_Y, TAB_WIDTH, HEADER_H);
+        SetColor(COL_BORDER);
+        Rectangle(x, HEADER_Y, TAB_WIDTH, HEADER_H);
 
-        gfx_SetTextFGColor(i == inv_tab ? COL_BG : COL_TEXT);
-        gfx_SetTextScale(1, 1);
-        gfx_PrintStringXY(inv_tab_labels[i], x + 4, HEADER_Y + 9);
+        SetTextFGColor(i == inv_tab ? COL_BG : COL_TEXT);
+        SetTextScale(1, 1);
+        PrintStringXY(inv_tab_labels[i], x + 4, HEADER_Y + 9);
 
         x += TAB_WIDTH + TAB_GAP;
     }
@@ -174,20 +165,20 @@ static void draw_tabs(void)
 
 static void draw_header(const char *text)
 {
-    gfx_SetColor(COL_SELECTED);
-    gfx_FillRectangle(HEADER_X, HEADER_Y, HEADER_W, HEADER_H);
-    gfx_SetColor(COL_BORDER);
-    gfx_Rectangle(HEADER_X, HEADER_Y, HEADER_W, HEADER_H);
+    SetColor(COL_SELECTED);
+    FillRectangle(HEADER_X, HEADER_Y, HEADER_W, HEADER_H);
+    SetColor(COL_BORDER);
+    Rectangle(HEADER_X, HEADER_Y, HEADER_W, HEADER_H);
 
-    gfx_SetTextFGColor(COL_BG);
-    gfx_SetTextScale(1, 1);
-    gfx_PrintStringXY(text, HEADER_X + 8, HEADER_Y + 9);
+    SetTextFGColor(COL_BG);
+    SetTextScale(1, 1);
+    PrintStringXY(text, HEADER_X + 8, HEADER_Y + 9);
 }
 
 static void draw_bar(int x, int y, int w, int h, uint32_t cur, uint32_t max, uint8_t col)
 {
-    gfx_SetColor(COL_BAR_BG);
-    gfx_FillRectangle(x, y, w, h);
+    SetColor(COL_BAR_BG);
+    FillRectangle(x, y, w, h);
 
     if (max > 0 && cur > 0)
     {
@@ -197,12 +188,12 @@ static void draw_bar(int x, int y, int w, int h, uint32_t cur, uint32_t max, uin
             fill = 1;
         if (fill > inner)
             fill = inner;
-        gfx_SetColor(col);
-        gfx_FillRectangle(x + 1, y + 1, fill, h - 2);
+        SetColor(col);
+        FillRectangle(x + 1, y + 1, fill, h - 2);
     }
 
-    gfx_SetColor(COL_BORDER);
-    gfx_Rectangle(x, y, w, h);
+    SetColor(COL_BORDER);
+    Rectangle(x, y, w, h);
 }
 
 static void draw_scrollbar(uint8_t count, uint8_t rows, int row_h, uint8_t scroll)
@@ -214,39 +205,38 @@ static void draw_scrollbar(uint8_t count, uint8_t rows, int row_h, uint8_t scrol
     int thumb_h = track_h * rows / count;
     int thumb_y = LIST_Y + 5 + (track_h - thumb_h) * scroll / (count - rows);
 
-    gfx_SetColor(COL_BORDER);
-    gfx_FillRectangle(LIST_X + LIST_WIDTH - 6, thumb_y, 3, thumb_h);
+    SetColor(COL_BORDER);
+    FillRectangle(LIST_X + LIST_WIDTH - 6, thumb_y, 3, thumb_h);
 }
 
 /* One-line key hint for the current tab, drawn under the list. */
 static void draw_helper(bool grabbing, bool using)
 {
-    const char *hint = NULL;
+    char hint_buf[32];
+
+    sprintf(hint_buf, " ");
 
     if (inv_tab == INV_TAB_PARTY)
     {
-        hint = grabbing ? "2nd: place    Alpha: cancel"
-                        : "2nd: switch    Clear: unequip";
+        if (grabbing) { sprintf(hint_buf, "%s: place    %s: cancel", INPUT.ActionKey.name, INPUT.BackKey.name); }
+        else { sprintf(hint_buf, "%s: switch    %s: unequip", INPUT.ActionKey.name, INPUT.ClearKey.name); }
     }
     else
     {
         switch ((ItemCategory)(inv_tab - INV_TAB_ITEM_BASE))
         {
-            case CATEGORY_CONSUMABLE: hint = "2nd: use";   break;
+            case CATEGORY_CONSUMABLE: sprintf(hint_buf, "%s: use", INPUT.ActionKey.name);   break;
             case CATEGORY_WEAPON:
-            case CATEGORY_ARMOR:      hint = "2nd: equip"; break;
+            case CATEGORY_ARMOR:      sprintf(hint_buf, "%s: equip", INPUT.ActionKey.name); break;
             default:                  break;   /* KEY tab: no action */
         }
     }
     if (using)
-        hint = "2nd: select    Alpha: cancel";
-
-    if (hint)
-    {
-        gfx_SetTextScale(1, 1);
-        gfx_SetTextFGColor(COL_TEXT_DIM);
-        gfx_PrintStringXY(hint, LIST_X, LIST_Y + INV_ROWS_VISIBLE * INV_ROW_HEIGHT + 17);
-    }
+        sprintf(hint_buf, "%s: select    %s: cancel", INPUT.ActionKey.name, INPUT.BackKey.name);
+    
+    SetTextScale(1, 1);
+    SetTextFGColor(COL_TEXT_DIM);
+    PrintStringXY(hint_buf, LIST_X, LIST_Y + INV_ROWS_VISIBLE * INV_ROW_HEIGHT + 17);
 }
 
 static void draw_item_list(const Inventory *inv)
@@ -255,8 +245,8 @@ static void draw_item_list(const Inventory *inv)
 
     if (inv_filtered_count == 0)
     {
-        gfx_SetTextFGColor(COL_TEXT_DIM);
-        gfx_PrintStringXY("(empty)", LIST_X + 14, LIST_Y + 14);
+        SetTextFGColor(COL_TEXT_DIM);
+        PrintStringXY("(empty)", LIST_X + 14, LIST_Y + 14);
         return;
     }
 
@@ -272,23 +262,23 @@ static void draw_item_list(const Inventory *inv)
 
         if (list_idx == inv_cursor)
         {
-            gfx_SetColor(COL_SELECTED);
-            gfx_FillRectangle(LIST_X + 4, y, LIST_WIDTH - 8, INV_ROW_HEIGHT - 2);
-            gfx_SetTextFGColor(COL_BG);
-            gfx_PrintStringXY(">", LIST_X + 8, y + 6);
+            SetColor(COL_SELECTED);
+            FillRectangle(LIST_X + 4, y, LIST_WIDTH - 8, INV_ROW_HEIGHT - 2);
+            SetTextFGColor(COL_BG);
+            PrintStringXY(">", LIST_X + 8, y + 6);
         }
         else
         {
-            gfx_SetTextFGColor(COL_TEXT);
+            SetTextFGColor(COL_TEXT);
         }
 
-        gfx_PrintStringXY(def->name, LIST_X + 22, y + 6);
+        PrintStringXY(def->name, LIST_X + 22, y + 6);
 
         if (def->stackable && slot->count > 1)
         {
             char qty_buf[8];
             sprintf(qty_buf, "x%d", slot->count);
-            gfx_PrintStringXY(qty_buf, LIST_X + LIST_WIDTH - 34, y + 6);
+            PrintStringXY(qty_buf, LIST_X + LIST_WIDTH - 34, y + 6);
         }
     }
 
@@ -303,8 +293,8 @@ static void draw_party_list(const Player *player, uint8_t cursor, uint8_t scroll
 
     if (player->party_count == 0)
     {
-        gfx_SetTextFGColor(COL_TEXT_DIM);
-        gfx_PrintStringXY("(no party)", LIST_X + 14, LIST_Y + 14);
+        SetTextFGColor(COL_TEXT_DIM);
+        PrintStringXY("(no party)", LIST_X + 14, LIST_Y + 14);
         return;
     }
 
@@ -322,14 +312,14 @@ static void draw_party_list(const Player *player, uint8_t cursor, uint8_t scroll
 
         if (idx == grab)
         {
-            gfx_SetColor(COL_TEXT_STAT);              /* distinct fill */
-            gfx_FillRectangle(x, y, LIST_WIDTH - 8, ST_ROW_HEIGHT - 2);
+            SetColor(COL_TEXT_STAT);              /* distinct fill */
+            FillRectangle(x, y, LIST_WIDTH - 8, ST_ROW_HEIGHT - 2);
             fg = COL_BG;
         }
         else if (idx == cursor)
         {
-            gfx_SetColor(COL_SELECTED);
-            gfx_FillRectangle(x, y, LIST_WIDTH - 8, ST_ROW_HEIGHT - 2);
+            SetColor(COL_SELECTED);
+            FillRectangle(x, y, LIST_WIDTH - 8, ST_ROW_HEIGHT - 2);
             fg = COL_BG;
         }
         else if (pick_def && !member_can_target(m, pick_def))
@@ -337,23 +327,23 @@ static void draw_party_list(const Player *player, uint8_t cursor, uint8_t scroll
             fg = COL_TEXT_DIM;
         }
 
-        gfx_SetTextFGColor(fg);
+        SetTextFGColor(fg);
 
-        gfx_PrintStringXY(m->name, x + 6, y + 4);
+        PrintStringXY(m->name, x + 6, y + 4);
         sprintf(buf, "Lv%d", m->level);
-        gfx_PrintStringXY(buf, x + LIST_WIDTH - 8 - 40, y + 4);
+        PrintStringXY(buf, x + LIST_WIDTH - 8 - 40, y + 4);
 
-        gfx_PrintStringXY("HP", x + 6, y + 14);
+        PrintStringXY("HP", x + 6, y + 14);
         draw_bar(x + 24, y + 14, 52, 8, m->hp, m->max_hp, COL_BAR_HP);
         sprintf(buf, "%d/%d", m->hp, m->max_hp);
-        gfx_SetTextFGColor(fg);
-        gfx_PrintStringXY(buf, x + 80, y + 14);
+        SetTextFGColor(fg);
+        PrintStringXY(buf, x + 80, y + 14);
 
-        gfx_PrintStringXY("MP", x + 6, y + 25);
+        PrintStringXY("MP", x + 6, y + 25);
         draw_bar(x + 24, y + 25, 52, 8, m->mp, m->max_mp, COL_BAR_MP);
         sprintf(buf, "%d/%d", m->mp, m->max_mp);
-        gfx_SetTextFGColor(fg);
-        gfx_PrintStringXY(buf, x + 80, y + 25);
+        SetTextFGColor(fg);
+        PrintStringXY(buf, x + 80, y + 25);
     }
 
     draw_scrollbar(player->party_count, ST_ROWS_VISIBLE, ST_ROW_HEIGHT, scroll);
@@ -377,7 +367,7 @@ static int draw_wrapped_text(const char *src, int x, int y, uint8_t max_w)
             memcpy(line, src, len + 1);
             line[len + 1] = '\0';
 
-            if (gfx_GetStringWidth(line) > max_w)
+            if (GetStringWidth(line) > max_w)
             {
                 if (last_space > 0)
                     len = last_space;
@@ -391,7 +381,7 @@ static int draw_wrapped_text(const char *src, int x, int y, uint8_t max_w)
 
         memcpy(line, src, len);
         line[len] = '\0';
-        gfx_PrintStringXY(line, x, y);
+        PrintStringXY(line, x, y);
 
         src += len;
         while (*src == ' ')
@@ -415,11 +405,11 @@ static void draw_item_detail(const Inventory *inv)
     const InventorySlot *slot = &inv->slots[inv_filtered[inv_cursor]];
     const ItemDef *def = &item_defs[slot->id];
 
-    gfx_SetTextFGColor(COL_SELECTED);
-    gfx_SetTextScale(1, 1);
-    gfx_PrintStringXY(def->name, PANEL_X + 10, PANEL_Y + 12);
+    SetTextFGColor(COL_SELECTED);
+    SetTextScale(1, 1);
+    PrintStringXY(def->name, PANEL_X + 10, PANEL_Y + 12);
 
-    gfx_SetTextFGColor(COL_TEXT);
+    SetTextFGColor(COL_TEXT);
     int y = draw_wrapped_text(def->description, PANEL_X + 10, PANEL_Y + 34, PANEL_WIDTH - 20);
 
     char stat_buf[24];
@@ -429,7 +419,7 @@ static void draw_item_detail(const Inventory *inv)
             if (def->stats.consumable.heal_amount > 0)
                 sprintf(stat_buf, "Heals %d HP", def->stats.consumable.heal_amount);
             else
-                sprintf(stat_buf, "Recovers %d MP", def->stats.consumable.mp_regain);
+                sprintf(stat_buf, "Mends %d MP", def->stats.consumable.mp_regain);
             break;
         case CATEGORY_WEAPON:
             sprintf(stat_buf, "ATK +%d", def->stats.weapon.attack);
@@ -444,8 +434,8 @@ static void draw_item_detail(const Inventory *inv)
 
     if (stat_buf[0])
     {
-        gfx_SetTextFGColor(COL_TEXT_STAT);
-        gfx_PrintStringXY(stat_buf, PANEL_X + 10, y + 6);
+        SetTextFGColor(COL_TEXT_STAT);
+        PrintStringXY(stat_buf, PANEL_X + 10, y + 6);
     }
 }
 
@@ -455,10 +445,10 @@ static void draw_equip_line(const char *label, ItemId id, int x, int y, uint8_t 
     const char *name = (id == ITEM_NONE) ? "-" : item_defs[id].name;
 
     sprintf(buf, "%s %s", label, name);
-    while (strlen(buf) > 3 && gfx_GetStringWidth(buf) > max_w)
+    while (strlen(buf) > 3 && GetStringWidth(buf) > max_w)
         buf[strlen(buf) - 1] = '\0';
 
-    gfx_PrintStringXY(buf, x, y);
+    PrintStringXY(buf, x, y);
 }
 
 static void draw_member_detail(const Player *player, uint8_t idx, const ItemDef *pick_def)
@@ -473,41 +463,41 @@ static void draw_member_detail(const Player *player, uint8_t idx, const ItemDef 
     int y = PANEL_Y + 12;
     char buf[24];
 
-    gfx_SetTextScale(1, 1);
-    gfx_SetTextFGColor(COL_SELECTED);
+    SetTextScale(1, 1);
+    SetTextFGColor(COL_SELECTED);
     if (idx == 0)
         sprintf(buf, "%s (Leader)", m->name);
     else if (idx < 3)
         sprintf(buf, "%s (Battle)", m->name);
     else 
         sprintf(buf, "%s", m->name);
-    gfx_PrintStringXY(buf, x, y);
+    PrintStringXY(buf, x, y);
 
-    gfx_SetTextFGColor(COL_TEXT);
+    SetTextFGColor(COL_TEXT);
     sprintf(buf, "Level %d", m->level);
-    gfx_PrintStringXY(buf, x, y + 16);
+    PrintStringXY(buf, x, y + 16);
 
     sprintf(buf, "EXP %lu", (unsigned long)m->exp);
-    gfx_PrintStringXY(buf, x, y + 32);
+    PrintStringXY(buf, x, y + 32);
 
     uint32_t to_next = (m->exp_next > m->exp) ? (m->exp_next - m->exp) : 0;
     sprintf(buf, "Next %lu", (unsigned long)to_next);
-    gfx_PrintStringXY(buf, x, y + 44);
+    PrintStringXY(buf, x, y + 44);
     draw_bar(x, y + 56, PANEL_WIDTH - 20, 8, m->exp, m->exp_next, COL_BAR_EXP);
 
-    gfx_SetTextFGColor(COL_TEXT_STAT);
+    SetTextFGColor(COL_TEXT_STAT);
 
     sprintf(buf, "ATK %d", member_attack(m));
-    gfx_PrintStringXY(buf, x, y + 72);
+    PrintStringXY(buf, x, y + 72);
     sprintf(buf, "DEF %d", member_defense(m));
-    gfx_PrintStringXY(buf, x, y + 84);
+    PrintStringXY(buf, x, y + 84);
 
     sprintf(buf, "SPD %d", member_speed(m));
-    gfx_PrintStringXY(buf, x, y + 96);
+    PrintStringXY(buf, x, y + 96);
 
     if (!pick_def)
     {
-        gfx_SetTextFGColor(COL_TEXT);
+        SetTextFGColor(COL_TEXT);
         draw_equip_line("W:", m->weapon, x, y + 108, PANEL_WIDTH - 20);
         draw_equip_line("A:", m->armor,  x, y + 120, PANEL_WIDTH - 20);
     }
@@ -516,13 +506,13 @@ static void draw_member_detail(const Player *player, uint8_t idx, const ItemDef 
     if (pick_def)
     {
         bool ok = member_can_target(m, pick_def);
-        gfx_SetTextFGColor(ok ? COL_SELECTED : COL_TEXT_DIM);
+        SetTextFGColor(ok ? COL_SELECTED : COL_TEXT_DIM);
 
         if (!ok)
         {
             sprintf(buf, pick_def->category == CATEGORY_CONSUMABLE ? "No effect"
                                                                 : "Can't equip");
-            gfx_PrintStringXY(buf, x, y + 122);
+            PrintStringXY(buf, x, y + 122);
         }
         else if (pick_def->category == CATEGORY_WEAPON ||
              pick_def->category == CATEGORY_ARMOR)
@@ -549,10 +539,10 @@ static void draw_member_detail(const Player *player, uint8_t idx, const ItemDef 
             }
 
             sprintf(buf, "%s %d > %d", label, atk_or_def_now, atk_or_def_new);
-            gfx_PrintStringXY(buf, x, y + 112);
+            PrintStringXY(buf, x, y + 112);
 
             sprintf(buf, "SPD %d > %d", member_speed(m), spd_new);
-            gfx_PrintStringXY(buf, x, y + 124);
+            PrintStringXY(buf, x, y + 124);
         }
         else if (pick_def->stats.consumable.heal_amount > 0)
         {
@@ -574,26 +564,25 @@ static void draw_gold(const Inventory *inv)
     char g_buff[16];
     sprintf(g_buff, "Gold: %d", inv->gold);
 
-    gfx_SetTextFGColor(COL_TEXT);
-    gfx_PrintStringXY(g_buff, PANEL_X + 10, PANEL_Y + PANEL_HEIGHT + 5);
+    SetTextFGColor(COL_TEXT);
+    PrintStringXY(g_buff, PANEL_X + 10, PANEL_Y + PANEL_HEIGHT + 5);
 }
 
 /* ---- the screen ---------------------------------------------------------- */
 
-bool inventory_screen(Player *player, uint8_t
-    *inv_prev_up, uint8_t *inv_prev_down, uint8_t *inv_prev_left, uint8_t *inv_prev_right, uint8_t *inv_prev_action, uint8_t *inv_prev_back, uint8_t *inv_prev_inv,
+bool inventory_screen(Player *player,
     GameState *current_state, TileMap *current_map, Tile *tileset, Renderer *renderer, Camera *camera)
 {
     Inventory *inv = &player->inventory;
 
     /* ---- input: edges computed once for every mode ---- */
-    bool up_p     = edge(inv_prev_up,     kb_IsDown(kb_KeyUp));
-    bool down_p   = edge(inv_prev_down,   kb_IsDown(kb_KeyDown));
-    bool left_p   = edge(inv_prev_left,   kb_IsDown(kb_KeyLeft));
-    bool right_p  = edge(inv_prev_right,  kb_IsDown(kb_KeyRight));
-    bool action_p = edge(inv_prev_action, kb_IsDown(kb_Key2nd));
-    bool back_p   = edge(inv_prev_back,   kb_IsDown(kb_KeyAlpha));
-    bool inv_p    = edge(inv_prev_inv,    kb_IsDown(kb_KeyDel));
+    bool up_p     = KeyJustPressed(INPUT.UpKey);
+    bool down_p   = KeyJustPressed(INPUT.DownKey);
+    bool left_p   = KeyJustPressed(INPUT.LeftKey);
+    bool right_p  = KeyJustPressed(INPUT.RightKey);
+    bool action_p = KeyJustPressed(INPUT.ActionKey);
+    bool back_p   = KeyJustPressed(INPUT.BackKey);
+    bool inv_p    = KeyJustPressed(INPUT.InvKey);
 
     /* ---- target picker (using a consumable) ---- */
     if (inv_picking)
@@ -625,7 +614,7 @@ bool inventory_screen(Player *player, uint8_t
             inv_picking = false;
         }
 
-        gfx_FillScreen(COL_BG);
+        FillScreen(COL_BG);
         char title[40];
         sprintf(title, "%s %s on whom?",
             pdef->category == CATEGORY_CONSUMABLE ? "Use" : "Equip", pdef->name);
@@ -634,7 +623,7 @@ bool inventory_screen(Player *player, uint8_t
         draw_member_detail(player, pk_cursor, pdef);
         draw_gold(inv);
         draw_helper(false, true);
-        gfx_SwapDraw();
+        SwapDraw();
         return true;
     }
 
@@ -657,7 +646,7 @@ bool inventory_screen(Player *player, uint8_t
     {
         list_nav(player->party_count, ST_ROWS_VISIBLE, &pty_cursor, &pty_scroll, up_p, down_p);
 
-        bool un_p = edge(&prev_unequip, kb_IsDown(kb_KeyClear));
+        bool un_p = KeyJustPressed(INPUT.ClearKey);
 
         if (!pty_grabbing && player->party_count > 0)
         {
@@ -709,7 +698,7 @@ bool inventory_screen(Player *player, uint8_t
     }
 
     /* ---- draw ---- */
-    gfx_FillScreen(COL_BG);
+    FillScreen(COL_BG);
     draw_tabs();
     if (on_party)
     {
@@ -731,7 +720,7 @@ bool inventory_screen(Player *player, uint8_t
         back_p = false;           /* consume it */
     } else if (back_p) // exit
     {
-        gfx_SwapDraw();
+        SwapDraw();
         return false; /* back to pause menu */
     }
 
@@ -742,6 +731,6 @@ bool inventory_screen(Player *player, uint8_t
         rendering_draw_initial(renderer, current_map, tileset, camera, player);
     }
 
-    gfx_SwapDraw();
+    SwapDraw();
     return true;
 }

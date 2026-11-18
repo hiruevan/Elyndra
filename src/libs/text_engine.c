@@ -1,5 +1,4 @@
-#include <graphx.h>
-#include <keypadc.h>
+#include <graphics.h>
 #include <string.h>
 #include "text_engine.h"
 
@@ -55,7 +54,7 @@ static uint8_t textbox_wrap(char lines[][TEXTBOX_MAX_LEN], uint8_t max_lines, un
             saved = textbox.message[pos + 1];
             textbox.message[pos + 1] = '\0';
             {
-                unsigned int w = gfx_GetStringWidth(&textbox.message[line_start]);
+                unsigned int w = GetStringWidth(&textbox.message[line_start]);
                 textbox.message[pos + 1] = saved;
                 if (w > max_width)
                     break;
@@ -104,8 +103,8 @@ void textbox_draw(void)
     uint8_t line_count, i;
 
     unsigned int box_x = 8;
-    unsigned int box_y = GFX_LCD_HEIGHT - 48;
-    unsigned int box_w = GFX_LCD_WIDTH - 16;
+    unsigned int box_y = LCD_HEIGHT - 48;
+    unsigned int box_w = LCD_WIDTH - 16;
     unsigned int box_h = 40;
 
     unsigned int text_x   = box_x + TEXTBOX_PAD_X;
@@ -118,19 +117,19 @@ void textbox_draw(void)
     if (max_lines_fit == 0)
         max_lines_fit = 1;
 
-    gfx_SetColor(1);
-    gfx_FillRectangle_NoClip(box_x, box_y, box_w, box_h);
+    SetColor(1);
+    FillRectangle_NoClip(box_x, box_y, box_w, box_h);
 
-    gfx_SetColor(3);
-    gfx_Rectangle_NoClip(box_x, box_y, box_w, box_h);
+    SetColor(3);
+    Rectangle_NoClip(box_x, box_y, box_w, box_h);
 
-    gfx_SetTextFGColor(223);
+    SetTextFGColor(223);
 
     line_count = textbox_wrap(lines, max_lines_fit, max_w);
 
     for (i = 0; i < line_count; i++)
     {
-        gfx_PrintStringXY(lines[i], text_x, text_y + (i * TEXTBOX_LINE_H));
+        PrintStringXY(lines[i], text_x, text_y + (i * TEXTBOX_LINE_H));
     }
 }
 

@@ -12,7 +12,7 @@ void tiles_init(Tile *tileset)
 }
 
 
-void tiles_set(Tile *tileset, uint8_t id, gfx_sprite_t *sprite)
+void tiles_set(Tile *tileset, uint8_t id, Sprite *sprite)
 {
     tileset[id].sprite = sprite;
 }
@@ -138,7 +138,7 @@ void tilemap_draw(
         for (x = 0; x < map->width; x++)
         {
             uint8_t tile_id;
-            gfx_sprite_t *sprite;
+            Sprite *sprite;
 
             tile_id = tilemap_get(map, x, y);
             sprite = tileset[tile_id].sprite;
@@ -149,7 +149,7 @@ void tilemap_draw(
             if (sprite == NULL)
                 continue;
 
-            gfx_Sprite(
+            DrawSprite(
                 sprite,
                 screen_x + x * TILE_SIZE,
                 screen_y + y * TILE_SIZE
@@ -193,7 +193,7 @@ void tilemap_draw_region(
         for (x = 0; x < width; x++)
         {
             uint8_t tile_id;
-            gfx_sprite_t *sprite;
+            Sprite *sprite;
 
             tile_id = tilemap_get(
                 map,
@@ -206,7 +206,7 @@ void tilemap_draw_region(
             if (sprite == NULL)
                 continue;
 
-            gfx_Sprite(
+            DrawSprite(
                 sprite,
                 screen_x + x * TILE_SIZE,
                 screen_y + y * TILE_SIZE
@@ -230,7 +230,7 @@ void tilemap_draw_column(
     for (y = 0; y < height; y++)
     {
         uint8_t tile_id;
-        gfx_sprite_t *sprite;
+        Sprite *sprite;
 
         tile_id = tilemap_get(
             map,
@@ -243,7 +243,7 @@ void tilemap_draw_column(
         if (sprite == NULL)
             continue;
 
-        gfx_Sprite(
+        DrawSprite(
             sprite,
             screen_x,
             screen_y + y * TILE_SIZE
@@ -266,7 +266,7 @@ void tilemap_draw_row(
     for (x = 0; x < width; x++)
     {
         uint8_t tile_id;
-        gfx_sprite_t *sprite;
+        Sprite *sprite;
 
         tile_id = tilemap_get(
             map,
@@ -279,7 +279,7 @@ void tilemap_draw_row(
         if (sprite == NULL)
             continue;
 
-        gfx_Sprite(
+        DrawSprite(
             sprite,
             screen_x + x * TILE_SIZE,
             screen_y

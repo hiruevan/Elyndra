@@ -1,4 +1,4 @@
-#include <graphx.h>
+#include <graphics.h>
 
 typedef struct
 {

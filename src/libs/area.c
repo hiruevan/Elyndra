@@ -1,4 +1,4 @@
-#include <graphx.h>
+#include <graphics.h>
 
 #include "../interactions/portals.h"
 #include "interactable.h"

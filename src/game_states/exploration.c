@@ -1,11 +1,11 @@
-#include <keypadc.h>
-#include <tice.h>
+#include <random.h>
+
+#include <input.h>
 
 #include "exploration.h"
 #include "../libs/rendering.h"
 #include "../libs/player.h"
 #include "../libs/interactable.h"
-#include "../libs/input.h"
 #include "../libs/area.h"
 #include "../interactions/shop_data.h"
 #include "pause_screen.h"
@@ -14,19 +14,12 @@
 static uint8_t steps_since_encounter = ENCOUNTER_GRACE_STEPS;
 
 // Exploration system
-void exploration_logic(Renderer *renderer, Camera *camera, Player *player, GameState *current_state, TileMap *current_map, Tile *tileset, AreaId *current_area, 
-    uint8_t action_key_down, uint8_t *prev_action_key, uint8_t *prev_clear_key, uint8_t *prev_inv_key) 
+void exploration_logic(Renderer *renderer, Camera *camera, Player *player, GameState *current_state, TileMap *current_map, Tile *tileset, AreaId *current_area) 
 {
     // Inputs
-    uint8_t clear_down = kb_IsDown(kb_KeyClear);
-    uint8_t inv_down = kb_IsDown(kb_KeyDel);
-    uint8_t pause_pressed = key_just_pressed(*prev_clear_key, clear_down);
-    uint8_t inv_pressed = key_just_pressed(*prev_inv_key, inv_down);
-    uint8_t interacting = key_just_pressed(*prev_action_key, action_key_down);
-    
-    *prev_clear_key = clear_down;
-    *prev_inv_key = inv_down;
-    *prev_action_key = action_key_down;
+    uint8_t pause_pressed = KeyJustPressed(INPUT.ClearKey);
+    uint8_t inv_pressed = KeyJustPressed(INPUT.InvKey);
+    uint8_t interacting = KeyJustPressed(INPUT.ActionKey);
 
     // Shop
     if (shop_is_active()) 
@@ -115,7 +108,7 @@ void exploration_logic(Renderer *renderer, Camera *camera, Player *player, GameS
 
                 rendering_resync(renderer, camera);
                 rendering_draw_initial(renderer, current_map, tileset, camera, player);
-                gfx_SwapDraw();
+                SwapDraw();
             }
 
             return;
@@ -138,8 +131,8 @@ void exploration_logic(Renderer *renderer, Camera *camera, Player *player, GameS
     }
 
     // Move camera
-    int16_t desired_camera_x = player->visual_x - (GFX_LCD_WIDTH - TILE_SIZE) / 2;
-    int16_t desired_camera_y = player->visual_y - (GFX_LCD_HEIGHT - TILE_SIZE) / 2;
+    int16_t desired_camera_x = player->visual_x - (LCD_WIDTH - TILE_SIZE) / 2;
+    int16_t desired_camera_y = player->visual_y - (LCD_HEIGHT - TILE_SIZE) / 2;
 
     int16_t current_camera_x = camera->x * TILE_SIZE + camera->pixel_x;
     int16_t current_camera_y = camera->y * TILE_SIZE + camera->pixel_y;

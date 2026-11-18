@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script>
+const TILE_NAMES = ['bricks','bricks_with_overhang','cave','chest_closed','chest_open','chimney_left','chimney_right','cobblestone','dirt','door','grass','house','hut','mountain0','mountain1','mountain2','mountain3','mountain4','mountain5','mountain6','mountain7','mountain8','roof_left0','roof_left1','roof_left2','roof_peak0','roof_peak1','roof_peak2','roof_right0','roof_right1','roof_right2','sheetrock','tower0','tower1','tower2','tower3','tower4','tree','window_left','window_right'];
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tile Map Editor</title>
+<style>
+  :root{
+    --bg:#1b1d22; --panel:#23262d; --panel2:#2b2f38; --line:#383c46;
+    --text:#e8e9ee; --muted:#9aa0ad; --accent:#e0a039; --accent2:#4fb0a8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+  #app{display:flex;flex-direction:column;height:100vh;}
+  header{background:var(--panel);border-bottom:1px solid var(--line);
+    padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;}
+  header h1{font-size:15px;margin:0 14px 0 0;color:var(--accent);letter-spacing:.02em;font-weight:600;}
+  .grp{display:flex;gap:6px;align-items:center;padding-right:14px;border-right:1px solid var(--line);}
+  .grp:last-child{border-right:none;}
+  label{font-size:11px;color:var(--muted);}
+  input[type=number]{width:56px;background:var(--panel2);border:1px solid var(--line);
+    color:var(--text);border-radius:4px;padding:4px 6px;font:inherit;}
+  button{background:var(--panel2);border:1px solid var(--line);color:var(--text);
+    border-radius:4px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;}
+  button:hover{border-color:var(--accent);}
+  button.active{background:var(--accent);color:#1b1d22;border-color:var(--accent);font-weight:600;}
+  input[type=range]{width:100px;}
+  #main{flex:1;display:flex;min-height:0;}
+  aside{width:220px;background:var(--panel);border-right:1px solid var(--line);
+    overflow-y:auto;padding:10px;flex-shrink:0;}
+  aside h2{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    margin:14px 0 6px;}
+  aside h2:first-child{margin-top:0;}
+  .tool-btn{width:100%;text-align:left;margin-bottom:4px;display:flex;gap:8px;align-items:center;}
+  .tile-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
+  .tile-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px;font-size:10px;}
+  .swatch{width:28px;height:28px;border-radius:3px;border:1px solid var(--line);
+    background-size:cover;background-position:center;display:flex;align-items:center;
+    justify-content:center;font-size:11px;color:#fff;text-shadow:0 1px 2px #000;}
+  .hint{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:6px;}
+  #canvasWrap{flex:1;overflow:auto;background:#121316;
+    background-image:linear-gradient(45deg,#181a1f 25%,transparent 25%),
+      linear-gradient(-45deg,#181a1f 25%,transparent 25%),
+      linear-gradient(45deg,transparent 75%,#181a1f 75%),
+      linear-gradient(-45deg,transparent 75%,#181a1f 75%);
+    background-size:20px 20px;background-position:0 0,0 10px,10px -10px,-10px 0;}
+  canvas{display:block;image-rendering:pixelated;cursor:crosshair;}
+  footer{background:var(--panel);border-top:1px solid var(--line);padding:6px 14px;
+    font-size:11px;color:var(--muted);display:flex;gap:20px;}
+  footer span b{color:var(--text);}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Tile Map Editor</h1>
+    <div class="grp">
+      <button id="presetWorld">Overworld 128×128</button>
+      <button id="presetTown">Town 40×40</button>
+      <button id="presetCave">Cave 64×64</button>
+      <button id="presetHouse">House 20×15</button>
+    </div>
+    <div class="grp">
+      <label>name <input type="text" id="mapName" value="world_map" style="width:120px"></label>
+    </div>
+    <div class="grp">
+      <label>W <input type="number" id="inW" value="128" min="1" max="512"></label>
+      <label>H <input type="number" id="inH" value="128" min="1" max="512"></label>
+      <button id="resizeMap">Resize (keep tiles)</button>
+      <button id="newMap">Clear</button>
+    </div>
+    <div class="grp">
+      <button id="importBtn">Import .h</button>
+      <button id="exportBtn">Export .h</button>
+      <input type="file" id="hFileInput" accept=".h,.txt" style="display:none">
+    </div>
+    <div class="grp">
+      <label><input type="checkbox" id="viewTileset"> view ids</label>
+    </div>
+    <div class="grp">
+      <label><input type="checkbox" id="showGrid" checked> grid</label>
+    </div>
+    <div class="grp">
+      <label>zoom <input type="range" id="zoom" min="4" max="48" value="12"></label>
+    </div>
+  </header>
+
+  <div id="main">
+    <aside>
+      <h2>Tools</h2>
+      <button class="tool-btn active" id="toolBrush" data-tool="brush">✏️ Brush (paint selected tile)</button>
+      <button class="tool-btn" id="toolRect" data-tool="rectangle">▭ Rectangle (fill with selected tile)</button>
+      <button class="tool-btn" id="toolArea" data-tool="area">🗺️ Area (autotile around selected "0" tile)</button>
+      <button class="tool-btn" id="toolLine" data-tool="line">📏 Line (draw a line of selected tile)</button>
+      <button class="tool-btn" id="toolFill" data-tool="fill">🪣 Fill (flood-fill matching tiles)</button>
+      <div class="hint">Right-click any cell = erase to grass. Drag with brush to paint a stroke.</div>
+
+      <h2>Tiles</h2>
+      <div class="tile-grid" id="palette"></div>
+
+      <h2>Legend</h2>
+      <div class="hint">
+        Rectangle: click one corner, then the opposite corner — fills the whole box with the selected tile.<br><br>
+        Area: works like Rectangle, but select a tileset's "0" tile first (e.g. mountain0, or a future water0) and it autotiles the surrounding 8 ids around a filled center, using the same [1,2,3 / 4,0,5 / 6,7,8] layout, offset from whichever "0" tile you picked. Min size 3×3.<br><br>
+        Check "view ids" to switch the whole editor to flat numbered colors instead of the tile images.
+      </div>
+    </aside>
+
+    <div id="canvasWrap">
+      <canvas id="grid" width="1536" height="1536"></canvas>
+    </div>
+  </div>
+
+  <footer>
+    <span>Map: <b id="stMap">world_map — 128×128</b></span>
+    <span>Cell: <b id="stCell">–, –</b></span>
+    <span>Tile: <b id="stTile">–</b></span>
+    <span>Tool: <b id="stTool">brush (grass)</b></span>
+  </footer>
+</div>
+
+<script>
+
+let mapW=128, mapH=128, grid=makeGrid(128,128,10);
+let arrName='world_map';
+let cell=12, showGrid=true, viewIds=false, tool='brush', brushId=0, anchor=null, isPainting=false;
+let images={}; // id -> HTMLImageElement | null (null = failed to load, use color fallback)
+
+const canvas=document.getElementById('grid'), ctx=canvas.getContext('2d');
+const palette=document.getElementById('palette');
+const stMap=document.getElementById('stMap'), stCell=document.getElementById('stCell'),
+      stTile=document.getElementById('stTile'), stTool=document.getElementById('stTool');
+
+function makeGrid(w,h,fill){return Array.from({length:h},()=>new Array(w).fill(fill));}
+
+// Tiles live next to this HTML file, named after the tile, e.g. "grass.png", "mountain0.png", "tower3.png".
+function ensureImage(id){
+  if(id in images) return;
+  images[id]=undefined; // pending
+  const img=new Image();
+  const name=TILE_NAMES[id];
+  img.onload=()=>{ images[id]=img; refreshSwatch(id); renderAll(); };
+  img.onerror=()=>{ images[id]=null; };
+  img.src=`${name}.png`;
+}
+function refreshSwatch(id){
+  const sw=document.getElementById('sw'+id);
+  if(!sw) return;
+  if(!viewIds && images[id]){ sw.style.backgroundImage=`url(${images[id].src})`; sw.textContent=''; }
+  else{ sw.style.backgroundImage='none'; sw.style.backgroundColor='#333'; sw.textContent=id; }
+}
+function refreshAllSwatches(){ TILE_NAMES.forEach((_,id)=>refreshSwatch(id)); }
+
+function buildPalette(){
+  palette.innerHTML='';
+  TILE_NAMES.forEach((name,id)=>{
+    ensureImage(id);
+    const b=document.createElement('button');
+    b.className='tile-btn'; b.dataset.id=id;
+    b.innerHTML=`<div class="swatch" id="sw${id}" style="background-color:#333">${id}</div><span>${name}</span>`;
+    b.onclick=()=>{ brushId=id; anchor=null; syncToolButtons(); };
+    palette.appendChild(b);
+  });
+}
+buildPalette();
+
+function toolLabel(){
+  const n=`${brushId} ${TILE_NAMES[brushId]||''}`;
+  if(tool==='brush') return `brush (${n})`;
+  if(tool==='rectangle') return `rectangle (${n}) — click 1st corner`;
+  if(tool==='area') return `area (base ${n}) — click 1st corner`;
+  if(tool==='line') return `line (${n}) — click 1st point`;
+  if(tool==='fill') return `fill (${n}) — click a tile`;
+}
+function syncToolButtons(){
+  document.querySelectorAll('.tool-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tile-btn').forEach(b=>b.classList.remove('active'));
+  palette.children[brushId].classList.add('active');
+  const ids={brush:'toolBrush',rectangle:'toolRect',area:'toolArea',line:'toolLine',fill:'toolFill'};
+  document.getElementById(ids[tool]).classList.add('active');
+  stTool.textContent=toolLabel();
+}
+function selectTool(t){ tool=t; anchor=null; syncToolButtons(); }
+document.getElementById('toolBrush').onclick=()=>selectTool('brush');
+document.getElementById('toolRect').onclick=()=>selectTool('rectangle');
+document.getElementById('toolArea').onclick=()=>selectTool('area');
+document.getElementById('toolLine').onclick=()=>selectTool('line');
+document.getElementById('toolFill').onclick=()=>selectTool('fill');
+
+function inBounds(x,y){return x>=0&&y>=0&&x<mapW&&y<mapH;}
+
+function drawCell(x,y){
+  const px=x*cell, py=y*cell, id=grid[y][x];
+  ensureImage(id);
+  if(!viewIds && images[id]) ctx.drawImage(images[id],px,py,cell,cell);
+  else{
+    ctx.fillStyle='#333'; ctx.fillRect(px,py,cell,cell);
+    if(cell>=14){ ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font=`${Math.min(10,cell-4)}px monospace`;
+      ctx.fillText(id,px+2,py+cell-3); }
+  }
+  if(showGrid){ ctx.strokeStyle='rgba(0,0,0,.18)'; ctx.strokeRect(px+.5,py+.5,cell-1,cell-1); }
+}
+function renderAll(){
+  canvas.width=mapW*cell; canvas.height=mapH*cell;
+  for(let y=0;y<mapH;y++) for(let x=0;x<mapW;x++) drawCell(x,y);
+  stMap.textContent=`${arrName} — ${mapW}×${mapH}`;
+}
+function setTile(x,y,id){ if(inBounds(x,y)){ grid[y][x]=id; drawCell(x,y); } }
+
+function fillRect(x0,y0,w,h,id){
+  for(let j=0;j<h;j++) for(let i=0;i<w;i++) setTile(x0+i,y0+j,id);
+}
+function placeAreaRect(x0,y0,w,h,base){
+  for(let j=0;j<h;j++) for(let i=0;i<w;i++){
+    let off;
+    if(j===0&&i===0) off=1;
+    else if(j===0&&i===w-1) off=3;
+    else if(j===h-1&&i===0) off=6;
+    else if(j===h-1&&i===w-1) off=8;
+    else if(j===0) off=2;
+    else if(j===h-1) off=7;
+    else if(i===0) off=4;
+    else if(i===w-1) off=5;
+    else off=0;
+    setTile(x0+i,y0+j,base+off);
+  }
+}
+function normalizedRect(x0,y0,x1,y1,minSize){
+  let ax=Math.min(x0,x1), ay=Math.min(y0,y1);
+  let w=Math.max(minSize,Math.abs(x1-x0)+1), h=Math.max(minSize,Math.abs(y1-y0)+1);
+  if(ax+w>mapW) w=mapW-ax; if(ay+h>mapH) h=mapH-ay;
+  return [ax,ay,w,h];
+}
+function drawLine(x0,y0,x1,y1,id){
+  let dx=Math.abs(x1-x0), sx=x0<x1?1:-1;
+  let dy=-Math.abs(y1-y0), sy=y0<y1?1:-1;
+  let err=dx+dy;
+  while(true){
+    setTile(x0,y0,id);
+    if(x0===x1&&y0===y1) break;
+    const e2=2*err;
+    if(e2>=dy){ err+=dy; x0+=sx; }
+    if(e2<=dx){ err+=dx; y0+=sy; }
+  }
+}
+function floodFill(x,y,id){
+  const target=grid[y][x];
+  if(target===id) return;
+  const stack=[[x,y]];
+  while(stack.length){
+    const [cx,cy]=stack.pop();
+    if(!inBounds(cx,cy) || grid[cy][cx]!==target) continue;
+    setTile(cx,cy,id);
+    stack.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+}
+
+function cellFromEvent(e){
+  const r=canvas.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/cell), y=Math.floor((e.clientY-r.top)/cell);
+  return [x,y];
+}
+canvas.addEventListener('mousedown',e=>{
+  if(e.button===2) return;
+  const [x,y]=cellFromEvent(e); if(!inBounds(x,y)) return;
+  if(tool==='brush'){ isPainting=true; setTile(x,y,brushId); }
+  else if(tool==='rectangle'){
+    if(!anchor){ anchor=[x,y]; stTool.textContent=`rectangle: 1st corner (${x},${y}) — click 2nd`; }
+    else{ const [ax,ay,w,h]=normalizedRect(anchor[0],anchor[1],x,y,1);
+      fillRect(ax,ay,w,h,brushId); anchor=null;
+      stTool.textContent=toolLabel(); }
+  }
+  else if(tool==='area'){
+    if(!anchor){ anchor=[x,y]; stTool.textContent=`area: 1st corner (${x},${y}) — click 2nd`; }
+    else{ const [ax,ay,w,h]=normalizedRect(anchor[0],anchor[1],x,y,3);
+      placeAreaRect(ax,ay,w,h,brushId); anchor=null;
+      stTool.textContent=toolLabel(); }
+  }
+  else if(tool==='line'){
+    if(!anchor){ anchor=[x,y]; stTool.textContent=`line: 1st point (${x},${y}) — click 2nd`; }
+    else{ drawLine(anchor[0],anchor[1],x,y,brushId); anchor=null;
+      stTool.textContent=toolLabel(); }
+  }
+  else if(tool==='fill'){ floodFill(x,y,brushId); }
+});
+window.addEventListener('mouseup',()=>isPainting=false);
+canvas.addEventListener('mousemove',e=>{
+  const [x,y]=cellFromEvent(e);
+  if(inBounds(x,y)){ stCell.textContent=`${x}, ${y}`; stTile.textContent=`${grid[y][x]} ${TILE_NAMES[grid[y][x]]||''}`; }
+  if(isPainting&&tool==='brush'&&inBounds(x,y)) setTile(x,y,brushId);
+});
+canvas.addEventListener('contextmenu',e=>{
+  e.preventDefault(); const [x,y]=cellFromEvent(e); setTile(x,y,10);
+});
+
+document.getElementById('showGrid').onchange=e=>{showGrid=e.target.checked; renderAll();};
+document.getElementById('viewTileset').onchange=e=>{viewIds=e.target.checked; refreshAllSwatches(); renderAll();};
+document.getElementById('zoom').oninput=e=>{cell=parseInt(e.target.value); renderAll();};
+
+function loadPreset(w,h,name){
+  mapW=w; mapH=h; grid=makeGrid(w,h,10); arrName=name;
+  document.getElementById('mapName').value=name;
+  document.getElementById('inW').value=w; document.getElementById('inH').value=h;
+  renderAll();
+}
+document.getElementById('presetWorld').onclick=()=>loadPreset(128,128,'world_map');
+document.getElementById('presetTown').onclick=()=>loadPreset(40,40,'town_map');
+document.getElementById('presetCave').onclick=()=>loadPreset(64,64,'cave_map');
+document.getElementById('presetHouse').onclick=()=>loadPreset(20,15,'house_map');
+
+document.getElementById('mapName').oninput=e=>{
+  arrName=e.target.value.trim()||'map'; stMap.textContent=`${arrName} — ${mapW}×${mapH}`;
+};
+
+document.getElementById('resizeMap').onclick=()=>{
+  const w=parseInt(document.getElementById('inW').value), h=parseInt(document.getElementById('inH').value);
+  if(!w||!h) return;
+  const newGrid=makeGrid(w,h,10);
+  for(let y=0;y<Math.min(h,mapH);y++)
+    for(let x=0;x<Math.min(w,mapW);x++)
+      newGrid[y][x]=grid[y][x];
+  mapW=w; mapH=h; grid=newGrid; renderAll();
+};
+document.getElementById('newMap').onclick=()=>{
+  const w=parseInt(document.getElementById('inW').value), h=parseInt(document.getElementById('inH').value);
+  if(!w||!h) return;
+  if(!confirm(`Clear the map to a blank ${w}×${h} grid? This discards the current tiles.`)) return;
+  mapW=w; mapH=h; grid=makeGrid(w,h,10); renderAll();
+};
+
+// --- Import / Export ---
+document.getElementById('importBtn').onclick=()=>document.getElementById('hFileInput').click();
+document.getElementById('hFileInput').onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    const text=reader.result;
+    const rows=[...text.matchAll(/\{([^{}]*)\}/g)]
+      .map(m=>m[1].split(',').map(s=>parseInt(s.trim())).filter(n=>!isNaN(n)))
+      .filter(r=>r.length>0);
+    if(!rows.length){ alert('Could not find a tile array in this file.'); return; }
+    mapH=rows.length; mapW=Math.max(...rows.map(r=>r.length));
+    grid=rows.map(r=>{ while(r.length<mapW) r.push(0); return r; });
+    const am=text.match(/static const uint8_t\s+(\w+)\[/); if(am) arrName=am[1];
+    document.getElementById('mapName').value=arrName;
+    document.getElementById('inW').value=mapW; document.getElementById('inH').value=mapH;
+    renderAll();
+  };
+  reader.readAsText(f);
+  e.target.value='';
+};
+
+document.getElementById('exportBtn').onclick=()=>{
+  const baseName = arrName.toUpperCase().replace(/[^A-Z0-9]/g,'_');
+  const macroName = `${baseName}_H`;
+  let out=`#ifndef ${macroName}\n#define ${macroName}\n\n#include <stdint.h>\n\n`;
+  out+=`#define ${baseName}_WIDTH  ${mapW}\n#define ${baseName}_HEIGHT ${mapH}\n\n`;
+  out+=`static const uint8_t ${arrName}[${baseName}_HEIGHT][${baseName}_WIDTH] = {\n`;
+  grid.forEach(row=>{ out+='    {'+row.join(', ')+'},\n'; });
+  out+='};\n\n#endif\n';
+  const blob=new Blob([out],{type:'text/plain'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download=`${arrName}.h`;
+  document.body.appendChild(a); a.click(); a.remove();
+};
+
+renderAll(); syncToolButtons();
+</script>
+</body>
+</html>

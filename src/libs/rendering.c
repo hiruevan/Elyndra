@@ -1,7 +1,6 @@
-#include <graphx.h>
+#include <graphics.h>
 
 #include "rendering.h"
-#include "sprite_utils.h"
 #include "../sprites/player_sprite.h"
 
 
@@ -17,7 +16,7 @@ void rendering_init(
         camera->y * TILE_SIZE + camera->pixel_y;
 
     renderer->player_background =
-        gfx_MallocSprite(
+        MallocSprite(
             PLAYER_WIDTH,
             PLAYER_HEIGHT
         );
@@ -25,7 +24,7 @@ void rendering_init(
     /*
      * Use the drawing buffer.
      */
-    gfx_SetDrawBuffer();
+    SetDrawBuffer();
 }
 
 
@@ -54,7 +53,7 @@ void rendering_draw_initial(
     /*
      * Save the background underneath the player.
      */
-    gfx_GetSprite(
+    GetSprite(
         renderer->player_background,
         player->screen_x,
         player->screen_y
@@ -63,7 +62,7 @@ void rendering_draw_initial(
     /*
      * Draw player.
      */
-    gfx_TransparentSprite(
+    DrawTransparentSprite(
         player_sprite,
         player->screen_x,
         player->screen_y
@@ -121,13 +120,13 @@ void rendering_update(
      * Copy the currently visible frame into
      * the drawing buffer.
      */
-    gfx_BlitScreen();
+    BlitScreen();
 
     /*
      * Remove the player by restoring the background
      * that was underneath them.
      */
-    gfx_Sprite(
+    DrawSprite(
         renderer->player_background,
         player->old_screen_x,
         player->old_screen_y
@@ -142,19 +141,19 @@ void rendering_update(
      */
     if (dx == 0 && dy == 0)
     {
-        gfx_GetSprite(
+        GetSprite(
             renderer->player_background,
             player->screen_x,
             player->screen_y
         );
 
-        gfx_TransparentSprite(
+        DrawTransparentSprite(
             player_sprite,
             player->screen_x,
             player->screen_y
         );
 
-        gfx_SwapDraw();
+        SwapDraw();
 
         player_commit_screen_position(player);
 
@@ -167,13 +166,13 @@ void rendering_update(
      */
     if (dx > 0)
     {
-        gfx_ShiftLeft(dx);
+        LCDShiftLeft(dx);
 
-        gfx_SetClipRegion(
-            GFX_LCD_WIDTH - dx,
+        SetClipRegion(
+            LCD_WIDTH - dx,
             0,
-            GFX_LCD_WIDTH,
-            GFX_LCD_HEIGHT
+            LCD_WIDTH,
+            LCD_HEIGHT
         );
 
         if (camera->pixel_x == 0)
@@ -187,7 +186,7 @@ void rendering_update(
                 camera->x + MAP_VIEW_WIDTH - 1,
                 camera->y,
                 MAP_VIEW_HEIGHT + 1,
-                GFX_LCD_WIDTH - TILE_SIZE,
+                LCD_WIDTH - TILE_SIZE,
                 -camera->pixel_y
             );
         }
@@ -202,20 +201,20 @@ void rendering_update(
                 camera->x + MAP_VIEW_WIDTH,
                 camera->y,
                 MAP_VIEW_HEIGHT + 1,
-                GFX_LCD_WIDTH - camera->pixel_x,
+                LCD_WIDTH - camera->pixel_x,
                 -camera->pixel_y
             );
         }
     }
     else if (dx < 0)
     {
-        gfx_ShiftRight(-dx);
+        LCDShiftRight(-dx);
 
-        gfx_SetClipRegion(
+        SetClipRegion(
             0,
             0,
             -dx,
-            GFX_LCD_HEIGHT
+            LCD_HEIGHT
         );
 
         tilemap_draw_column(
@@ -235,13 +234,13 @@ void rendering_update(
      */
     if (dy > 0)
     {
-        gfx_ShiftUp(dy);
+        LCDShiftUp(dy);
 
-        gfx_SetClipRegion(
+        SetClipRegion(
             0,
-            GFX_LCD_HEIGHT - dy,
-            GFX_LCD_WIDTH,
-            GFX_LCD_HEIGHT
+            LCD_HEIGHT - dy,
+            LCD_WIDTH,
+            LCD_HEIGHT
         );
 
         if (camera->pixel_y == 0)
@@ -256,7 +255,7 @@ void rendering_update(
                 camera->y + MAP_VIEW_HEIGHT - 1,
                 MAP_VIEW_WIDTH + 1,
                 -camera->pixel_x,
-                GFX_LCD_HEIGHT - TILE_SIZE
+                LCD_HEIGHT - TILE_SIZE
             );
         }
         else
@@ -271,18 +270,18 @@ void rendering_update(
                 camera->y + MAP_VIEW_HEIGHT,
                 MAP_VIEW_WIDTH + 1,
                 -camera->pixel_x,
-                GFX_LCD_HEIGHT - camera->pixel_y
+                LCD_HEIGHT - camera->pixel_y
             );
         }
     }
     else if (dy < 0)
     {
-        gfx_ShiftDown(-dy);
+        LCDShiftDown(-dy);
 
-        gfx_SetClipRegion(
+        SetClipRegion(
             0,
             0,
-            GFX_LCD_WIDTH,
+            LCD_WIDTH,
             -dy
         );
 
@@ -301,18 +300,18 @@ void rendering_update(
     /*
      * Reset clipping.
      */
-    gfx_SetClipRegion(
+    SetClipRegion(
         0,
         0,
-        GFX_LCD_WIDTH,
-        GFX_LCD_HEIGHT
+        LCD_WIDTH,
+        LCD_HEIGHT
     );
 
 
     /*
      * Save the new background underneath the player.
      */
-    gfx_GetSprite(
+    GetSprite(
         renderer->player_background,
         player->screen_x,
         player->screen_y
@@ -321,7 +320,7 @@ void rendering_update(
     /*
      * Draw player on top of world.
      */
-    gfx_TransparentSprite(
+    DrawTransparentSprite(
         player_sprite,
         player->screen_x,
         player->screen_y
@@ -331,7 +330,7 @@ void rendering_update(
     /*
      * Show completed frame.
      */
-    gfx_SwapDraw();
+    SwapDraw();
 
 
     /*

@@ -1,4 +1,4 @@
-#include <graphx.h>
+#include <graphics.h>
 #include <stdint.h>
 
 // player_sprite (12x16)
@@ -21,7 +21,7 @@ static unsigned char player_sprite_data[] = {
     0, 0, 36, 232, 232, 232, 36, 232, 36, 0, 0, 0,
     0, 36, 36, 36, 232, 232, 36, 36, 36, 36, 36, 0
 };
-static gfx_sprite_t *player_sprite = (gfx_sprite_t*)player_sprite_data;
+static Sprite *player_sprite = (Sprite*)player_sprite_data;
 
 #define PLAYER_WIDTH 12
 #define PLAYER_HEIGHT 16

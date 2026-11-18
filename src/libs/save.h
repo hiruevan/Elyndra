@@ -1,5 +1,5 @@
 #pragma once
-#include <graphx.h>
+#include <graphics.h>
 #include "player.h"
 #include "area.h"
 #include "interactable.h"

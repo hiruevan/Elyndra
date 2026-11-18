@@ -1,21 +1,20 @@
-#include <keypadc.h>
-#include <graphx.h>
+#include <graphics.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <string.h>
+
+#include <input.h>
 
 #include "pause_screen.h"
 #include "game_state.h"
 #include "inventory_screen.h"
 #include "../libs/save.h"
 #include "../libs/area.h"
-#include "../libs/input.h"
 #include "../interactions/interactables.h"
 
 #define SAVE_MSG_FRAMES 60
 
 bool pause_screen(Renderer *renderer, Camera *camera, Player *player, TileMap *current_map, AreaId current_area, GameState *current_state, Tile *tileset,
-uint8_t *prev_up, uint8_t *prev_down, uint8_t *prev_action_key, uint8_t *prev_back_key, uint8_t *prev_clear_key,
 uint8_t save_slot, GameSave *save)
 {
     static uint8_t selected = 0;
@@ -32,16 +31,16 @@ uint8_t save_slot, GameSave *save)
     const uint8_t option_count = 4;
 
     // Draw background
-    gfx_FillScreen(1);
-    gfx_SetTextFGColor(223);
+    FillScreen(1);
+    SetTextFGColor(223);
 
     // Title
-    gfx_SetTextScale(2, 2);
-    gfx_SetTextXY(120, 35);
-    gfx_PrintString("PAUSED");
+    SetTextScale(2, 2);
+    SetTextXY(120, 35);
+    PrintString("PAUSED");
 
     // Options
-    gfx_SetTextScale(1, 1);
+    SetTextScale(1, 1);
 
     for (uint8_t i = 0; i < option_count; i++)
     {
@@ -49,46 +48,39 @@ uint8_t save_slot, GameSave *save)
 
         if (i == selected)
         {
-            gfx_SetTextFGColor(250);
-            gfx_PrintStringXY("> ", 85, y);
+            SetTextFGColor(250);
+            PrintStringXY("> ", 85, y);
         }
         else
         {
-            gfx_SetTextFGColor(223);
-            gfx_PrintStringXY("  ", 85, y);
+            SetTextFGColor(223);
+            PrintStringXY("  ", 85, y);
         }
 
-        gfx_PrintStringXY(options[i], 105, y);
+        PrintStringXY(options[i], 105, y);
     }
 
     // Save feedback message
     if (msg_timer > 0)
     {
-        gfx_SetTextFGColor(223);
-        gfx_PrintStringXY(msg_ok ? "Game saved!" : "Save failed!", 105, 210);
+        SetTextFGColor(223);
+        PrintStringXY(msg_ok ? "Game saved!" : "Save failed!", 105, 210);
         msg_timer--;
     }
 
-    // Input
-    uint8_t up     = kb_IsDown(kb_KeyUp);
-    uint8_t down   = kb_IsDown(kb_KeyDown);
-    uint8_t back   = kb_IsDown(kb_KeyAlpha);
-    uint8_t clear  = kb_IsDown(kb_KeyClear);
-    uint8_t action = kb_IsDown(kb_Key2nd);
-
-    if (key_just_pressed(*prev_up, up))
+    if (KeyJustPressed(INPUT.UpKey))
     {
         if (selected > 0)
             selected--;
     }
 
-    if (key_just_pressed(*prev_down, down))
+    if (KeyJustPressed(INPUT.DownKey))
     {
         if (selected < option_count - 1)
             selected++;
     }
 
-    if (key_just_pressed(*prev_action_key, action))
+    if (KeyJustPressed(INPUT.ActionKey))
     {
         switch (selected)
         {
@@ -127,19 +119,13 @@ uint8_t save_slot, GameSave *save)
         }
     }
 
-    if (key_just_pressed(*prev_back_key, back) || key_just_pressed(*prev_clear_key, clear))
+    if (KeyJustPressed(INPUT.BackKey) || KeyJustPressed(INPUT.ClearKey))
     {
         msg_timer = 0;
         *current_state = GAME_EXPLORATION;
         rendering_draw_initial(renderer, current_map, tileset, camera, player);
     }
 
-    *prev_up = up;
-    *prev_down = down;
-    *prev_clear_key = clear;
-    *prev_back_key = back;
-    *prev_action_key = action;
-
-    gfx_SwapDraw();
+    SwapDraw();
     return true;
 }

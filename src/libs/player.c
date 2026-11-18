@@ -1,5 +1,6 @@
-#include <keypadc.h>
 #include <string.h>
+
+#include <input.h>
 
 #include "player.h"
 #include "inventory.h"
@@ -239,27 +240,19 @@ void player_handle_input(
     if (player->moving)
         return;
 
-    /*
-     * Match the original movement priority:
-     *
-     * Right
-     * Left
-     * Down
-     * Up
-     */
-    if (kb_IsDown(kb_KeyRight)) {
+    if (KeyDown(INPUT.RightKey)) {
         move_x = 1;
         player->facing = DIRECTION_RIGHT;
     }
-    else if (kb_IsDown(kb_KeyLeft)) {
+    else if (KeyDown(INPUT.LeftKey)) {
         move_x = -1;
         player->facing = DIRECTION_LEFT;
     }
-    else if (kb_IsDown(kb_KeyDown)) {
+    else if (KeyDown(INPUT.DownKey)) {
         move_y = 1;
         player->facing = DIRECTION_DOWN;
     }
-    else if (kb_IsDown(kb_KeyUp)) {
+    else if (KeyDown(INPUT.UpKey)) {
         move_y = -1;
         player->facing = DIRECTION_UP;
     }

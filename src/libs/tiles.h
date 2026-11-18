@@ -2,7 +2,7 @@
 #define TILES_H
 
 #include <stdint.h>
-#include <graphx.h>
+#include <graphics.h>
 
 #define TILE_SIZE 16
 
@@ -27,7 +27,7 @@
  */
 typedef struct
 {
-    gfx_sprite_t *sprite;
+    Sprite *sprite;
 } Tile;
 
 
@@ -60,7 +60,7 @@ void tilemap_fullset(
 /*
  * Assign a sprite to a tile ID.
  */
-void tiles_set(Tile *tileset, uint8_t id, gfx_sprite_t *sprite);
+void tiles_set(Tile *tileset, uint8_t id, Sprite *sprite);
 
 
 /*

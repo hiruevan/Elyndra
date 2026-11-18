@@ -1,6 +1,6 @@
 #pragma once
 
-#include <graphx.h>
+#include <graphics.h>
 #include "tiles.h"
 
 #define AREA_STACK_DEPTH 32

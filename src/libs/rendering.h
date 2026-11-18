@@ -2,7 +2,7 @@
 #define RENDERING_H
 
 #include <stdint.h>
-#include <graphx.h>
+#include <graphics.h>
 
 #include "tiles.h"
 #include "camera.h"
@@ -11,7 +11,7 @@
 
 typedef struct
 {
-    gfx_sprite_t *player_background;
+    Sprite *player_background;
 
     int16_t old_camera_x;
     int16_t old_camera_y;
